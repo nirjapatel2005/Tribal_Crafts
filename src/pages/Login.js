@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 import './Login.css';
 
 const Login = () => {
@@ -8,6 +10,8 @@ const Login = () => {
     email: '',
     password: ''
   });
+  
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -16,14 +20,25 @@ const Login = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert('Login successful! Welcome to TribalCraft.');
-    setFormData({
-      username: '',
-      email: '',
-      password: ''
-    });
+    
+    try {
+      const response = await axios.post('http://localhost:5000/api/auth/login', {
+        username: formData.username,
+        email: formData.email,
+        password: formData.password
+      });
+      
+      login(response.data.token, response.data.user);
+      alert('Login successful! Welcome to TribalCraft.');
+      navigate('/');
+    } catch (error) {
+      alert(error.response?.data?.message || 'Login failed');
+    }
   };
 
   return (
@@ -57,13 +72,22 @@ const Login = () => {
           
           <div className="form-group">
             <label>Password</label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-            />
+            <div className="password-input">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? '👁️' : '🙈'}
+              </button>
+            </div>
           </div>
           
           <button type="submit" className="login-button">
